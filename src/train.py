@@ -20,6 +20,8 @@ def train_model():
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,)),
+        transforms.RandomRotation(degrees=5),  # Added augmentation
+        transforms.RandomAffine(degrees=0, translate=(0.1, 0.1))  # Added augmentation
     ])
     
     # Test transform without augmentation
