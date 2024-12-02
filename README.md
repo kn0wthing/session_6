@@ -108,3 +108,19 @@ When you're done working with the project:
 ```bash
 deactivate
 ```
+
+## GitHub Actions CI/CD
+
+This repository uses GitHub Actions for continuous integration and testing. The workflow automatically runs when:
+- Pushing to main/master branch
+- Creating a pull request to main/master branch
+- Manually triggering from the Actions tab
+
+### Workflow Features
+1. **Multi-Python Version Testing**: Tests run on Python 3.8 and 3.9
+2. **Dependency Caching**: Speeds up workflow by caching pip packages
+3. **Code Coverage**: Generates and uploads coverage reports
+4. **Automated Model Checks**:
+   - Parameter count verification (<20K)
+   - Architecture component validation
+   - Model structure tests
