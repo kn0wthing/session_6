@@ -19,8 +19,7 @@ This repository contains a PyTorch implementation of a CNN model for MNIST digit
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/mnist-classification.git
-cd mnist-classification
+git clone https://github.com/kn0wthing/session_6.git
 ```
 
 2. Create and activate virtual environment:
