@@ -9,6 +9,7 @@ from src.utils import count_parameters, check_batchnorm, check_dropout, check_li
 def test_parameter_count():
     model = MNISTNet()
     param_count = count_parameters(model)
+    print(f"Model has {param_count} parameters")
     assert param_count < 20000, f"Model has {param_count} parameters, should be less than 20000"
 
 def test_batchnorm_presence():

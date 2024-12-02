@@ -6,48 +6,59 @@ class MNISTNet(nn.Module):
         super(MNISTNet, self).__init__()
         
         self.features = nn.Sequential(
-            # Initial conv layer
-            nn.Conv2d(1, 16, kernel_size=3, padding=1),
-            nn.BatchNorm2d(16),
-            nn.ReLU(),
-            
-            # 1x1 conv for channel attention
-            nn.Conv2d(16, 8, kernel_size=1),
+            # First block layer - reduce initial channels
+            nn.Conv2d(1, 8, kernel_size=3, padding=1),
             nn.BatchNorm2d(8),
             nn.ReLU(),
+            nn.Dropout(0.1),
             
-            nn.MaxPool2d(2, 2),
-            nn.Dropout(0.2),
-            
-            # Second conv block
-            nn.Conv2d(8, 24, kernel_size=3, padding=1),
-            nn.BatchNorm2d(24),
+            nn.Conv2d(8, 16, kernel_size=3, padding=1),
+            nn.BatchNorm2d(16),
             nn.ReLU(),
+            nn.Dropout(0.1),
             
-            # 1x1 conv for channel reduction
-            nn.Conv2d(24, 16, kernel_size=1),
+            # Transition layer
+            nn.MaxPool2d(2, 2),
+            nn.Dropout(0.1),
+            
+            # Second block layer - efficient channel usage
+            nn.Conv2d(16, 16, kernel_size=3, padding=1),
             nn.BatchNorm2d(16),
             nn.ReLU(),
             
-            nn.MaxPool2d(2, 2),
-            nn.Dropout(0.2),
-            
-            # Final conv layer
             nn.Conv2d(16, 32, kernel_size=3, padding=1),
             nn.BatchNorm2d(32),
             nn.ReLU(),
             
-            # Global Average Pooling
+            # Transition layer
+            nn.MaxPool2d(2, 2),
+            nn.Dropout(0.1),
+            
+            # Third block with channel reduction
+            nn.Conv2d(32, 16, kernel_size=1),  # Channel reduction
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            
+            nn.Conv2d(16, 32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            
+            # Final layers
+            nn.MaxPool2d(2, 2),
+            nn.Dropout(0.1),
+            
+            nn.Conv2d(32, 16, kernel_size=1),
+            nn.ReLU(),
+            
             nn.AdaptiveAvgPool2d(1),
         )
         
         self.classifier = nn.Sequential(
-            nn.Dropout(0.2),
-            nn.Linear(32, 10)
+            nn.Linear(16, 10)
         )
         
     def forward(self, x):
         x = self.features(x)
-        x = x.view(-1, 32)
+        x = x.view(-1, 16)
         x = self.classifier(x)
-        return x 
+        return x

@@ -11,6 +11,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 def train_model():
     # Set random seed for reproducibility
     torch.manual_seed(42)
+    torch.backends.cudnn.deterministic = True
     
     # Device configuration
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -19,8 +20,6 @@ def train_model():
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,)),
-        transforms.RandomRotation(degrees=5),  # Added augmentation
-        transforms.RandomAffine(degrees=0, translate=(0.1, 0.1))  # Added augmentation
     ])
     
     # Test transform without augmentation
@@ -30,7 +29,7 @@ def train_model():
     ])
     
     # Load MNIST dataset
-    full_train_dataset = datasets.MNIST(root='./data', 
+    full_train_dataset = datasets.MNIST(root='./data',
                                       train=True,
                                       transform=transform,
                                       download=True)
@@ -49,16 +48,20 @@ def train_model():
     
     # Data loaders
     train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=128)
+    val_loader = DataLoader(val_dataset, batch_size=128, shuffle=False)
     
     # Initialize model, loss, and optimizer
     model = MNISTNet().to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.003)  # Increased learning rate
-    scheduler = optim.lr_scheduler.OneCycleLR(optimizer, 
-                                            max_lr=0.01,
-                                            epochs=20,
-                                            steps_per_epoch=len(train_loader))
+    optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=1e-4)
+    scheduler = optim.lr_scheduler.OneCycleLR(
+        optimizer,
+        max_lr=0.01,
+        epochs=20,
+        steps_per_epoch=len(train_loader),
+        pct_start=0.2,
+        anneal_strategy='cos'
+    )
     
     # Training loop
     best_acc = 0.0
@@ -67,6 +70,9 @@ def train_model():
     for epoch in range(epochs):
         model.train()
         running_loss = 0.0
+        correct = 0
+        total = 0
+        
         for i, (images, labels) in enumerate(train_loader):
             images, labels = images.to(device), labels.to(device)
             
@@ -78,10 +84,13 @@ def train_model():
             scheduler.step()
             
             running_loss += loss.item()
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
             
-        # Print average training loss
+        train_accuracy = 100 * correct / total
         avg_loss = running_loss / len(train_loader)
-        print(f'Epoch [{epoch+1}/{epochs}], Training Loss: {avg_loss:.4f}')
+        print(f'Epoch [{epoch+1}/{epochs}], Loss: {avg_loss:.4f}, Train Acc: {train_accuracy:.2f}%')
             
         # Validation
         model.eval()
